@@ -1,0 +1,10 @@
+# Ignorer les exécutables
+main
+main.exe
+*.out
+
+# Ignorer les fichiers objets de compilation
+*.o
+
+# Ignorer les dossiers de sortie générés par le jeu (optionnel)
+*_out/
