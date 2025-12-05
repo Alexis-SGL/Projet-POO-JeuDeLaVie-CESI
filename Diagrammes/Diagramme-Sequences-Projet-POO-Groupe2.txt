@@ -1,0 +1,166 @@
+sequenceDiagram
+    autonumber
+    actor User as Utilisateur
+    participant Main
+    participant Jeu as JeuDeLaVie
+    participant F as Fichier
+    participant G as Grille
+    participant C as Cellule
+    participant E as EtatActuel
+    participant R as Regle
+    participant VueC as Console
+    participant VueG as FenetreGraphique
+
+    Note over User, VueG: Initialisation
+
+    User->>Main: Lancement (./main input.txt)
+    activate Main
+    
+    %% Configuration
+    Main->>User: Demande maxIterations
+    User-->>Main: Saisie
+    Main->>User: Demande estTorique
+    User-->>Main: Saisie
+
+    Note right of Main: Création du Jeu
+    Main->>Jeu: new JeuDeLaVie(path, max, estTorique)
+    activate Jeu
+    
+    Jeu->>F: new Fichier(path)
+    Jeu->>Jeu: chargerFichier()
+    Jeu->>F: lecture(estTorique)
+    activate F
+    F->>G: new Grille(l, h, estTorique)
+    activate G
+    G-->>F: Grille*
+    deactivate G
+    F-->>Jeu: Grille* (remplie)
+    deactivate F
+    deactivate Jeu
+
+    Note over User, VueG: Choix du Mode
+
+    Main->>User: Choix Mode ? (1=Console, 2=Graphique)
+    User-->>Main: Choix
+
+    %% Instanciation de la vue selon le choix
+    alt Choix == 1 (Console)
+        Main->>Jeu: jouerConsole()
+        activate Jeu
+        Jeu->>VueC: new Console()
+        activate VueC
+    else Choix == 2 (Graphique)
+        Main->>Jeu: jouerGraphique()
+        activate Jeu
+        Jeu->>VueG: new FenetreGraphique(largeurCellule, hauteurCellule , tailleCellule)
+        activate VueG
+    end
+
+    Note over User, VueG: Boucle du jeu de la vie
+
+    %% Boucle unique avec logique commune
+    loop Tant que (i < max) ET (fenetre ouverte)
+        
+        %% Gestion evenements (Uniquement si graphique)
+        opt Si Mode Graphique
+            Jeu->>VueG: gererEvenements()
+             opt Si clic croix
+                VueG->>VueG: window.close()
+            end
+        end
+
+        %% A. UPDATE (COMMUN)
+        Note right of Jeu: Mise à jour de la grille et des cellules
+        Jeu->>G: updateGrille()
+        activate G
+        
+        loop Calcul nombres voisins et le prochain état
+            G->>G: compterVoisins()
+            activate G
+            
+            %% C'est ICI, à l'intérieur de compterVoisins
+            opt Si Mode Torique
+                G->>G: calculTorique(nx, ny)
+            end
+            
+            deactivate G
+
+            G->>C: calculerEtatSuivant(nbVoisins)
+            activate C
+            C->>E: estVivant()
+            E-->>C: bool
+            C->>R: calculerEtatSuivant(bool, nb)
+            R-->>C: resultat
+            
+            alt Si Vivant
+                C->>C: etatSuivant = new EtatVivant()
+            else Si Mort
+                C->>C: etatSuivant = new EtatMort()
+            end
+            deactivate C
+        end
+
+        loop Fait la mutation de l'état
+            G->>C: changerEtat()
+            activate C
+            C->>C: delete etatActuel
+            C->>C: etatActuel = etatSuivant
+            C->>C: etatSuivant = nullptr
+            deactivate C
+        end
+        deactivate G
+
+        %% B. SAUVEGARDE (COMMUNE)
+        Note right of Jeu: Sauvegarde dans un dossier
+        Jeu->>F: ecriture(grille, i, estTorique)
+        activate F
+        F-->>Jeu: Fichier écrit
+        deactivate F
+
+        %% C. AFFICHAGE (DIFFERENT SELON LE MODE)
+        alt Si Mode Console
+            Note right of Jeu: Affichage console
+            Jeu->>VueC: afficher(grille)
+            VueC->>G: getCellule()
+            VueC->>C: recupererAffichage()
+            C->>E: affichageCellule()
+            E-->>C: int (0/1)
+            C-->>VueC: int
+            VueC-->>Jeu: Texte affiché
+        
+        else Si Mode Graphique
+            Note right of Jeu: Affichage Graphique
+            Jeu->>VueG: afficher(grille)
+            
+            loop Pour chaque Cellule
+                VueG->>G: getCellule()
+                VueG->>C: recupererAffichage()
+                activate C
+                C->>E: affichageCellule()
+                activate E
+                E-->>C: int (0/1)
+                deactivate E
+                C-->>VueG: int
+                deactivate C
+                
+                opt Si symbole == 1
+                    VueG->>VueG: window.draw()
+                end
+            end
+            
+            Jeu->>VueG: updateFenetre()
+            Note right of VueG: window.display()
+        end
+    end
+
+    %% NETTOYAGE
+    opt Si Mode Graphique
+        Jeu->>VueG: ~FenetreGraphique()
+        deactivate VueG
+    end
+    
+    Jeu-->>Main: Fin du jeu
+    deactivate Jeu
+    
+    Main-->>User: Fin
+    deactivate Main
