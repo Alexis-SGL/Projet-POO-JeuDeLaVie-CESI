@@ -1,0 +1,138 @@
+---
+config:
+  layout: elk
+  theme: neo
+---
+classDiagram
+    namespace Principale {
+        class JeuDeLaVie
+        class Grille
+        class Cellule
+        class Fichier
+    }
+
+    namespace PatternRegles {
+        class RegleCellule
+        class RegleCelluleStandard
+    }
+
+    namespace PatternEtat {
+        class EtatCellule
+        class EtatVivant
+        class EtatMort
+    }
+
+    namespace AffichageInterface {
+        class Interface
+        class FenetreGraphique
+        class Console
+    }
+
+    class JeuDeLaVie{
+      -Grille* grille
+      -int compteurIteration
+      -int maxIteration
+      -string cheminFichier
+      -bool estTorique
+      +JeuDeLaVie(string, int, bool)
+      +~JeuDeLaVie() 
+      +getCompteurIteration() int 
+      +getMaxIteration() int
+      +jouerConsole() void
+      +jouerGraphique() void
+      +chargerFichier(string) void
+    }
+
+    class Grille {
+        -int largeur
+        -int hauteur
+        -vector~vector~Cellule*~~ matrice
+        -bool jeuStable
+        -bool estTorique
+        +Grille(int, int, bool)
+        +~Grille()
+        +getLargeur() int
+        +getHauteur() int
+        +updateGrille() void
+        +getCellule(int, int) Cellule*
+        +compterVoisins(int, int) int
+        +estStable() bool
+        -calculTorique(int&, int&) bool
+    }
+
+    class Cellule {
+        -EtatCellule* etatActuel
+        -EtatCellule* etatSuivant
+        -RegleCellule* regle
+        +Cellule(EtatCellule*)
+        +~Cellule()
+        +setEtatActuel(EtatCellule*) void
+        +getEtatActuel() bool
+        +calculerEtatSuivant(int) void
+        +changerEtat() void
+        +recupererAffichage() int
+    }
+
+    class EtatCellule {
+        <<abstract>>
+        +estVivant() bool*
+        +affichageCellule() int*
+    }
+
+    class EtatVivant {
+        +estVivant() bool
+        +affichageCellule() int
+    }
+
+    class EtatMort {
+        +estVivant() bool
+        +affichageCellule() int
+    }
+
+    class Interface {
+        <<abstract>>
+        +afficher(Grille)*
+        +~Interface()
+    }
+
+    class FenetreGraphique{
+        -sf::RenderWindow window
+        -int tailleCellule
+        +FenetreGraphique(int, int, int)
+        +~FenetreGraphique()
+        +afficher(const Grille&) void
+        +updateFenetre() void
+        +gererEvenements() void
+        +estOuverte() bool
+    }
+
+    class Console{
+        +afficher(Grille) void
+    }
+
+    class Fichier{
+        -string path
+        +Fichier(string)
+        +lecture(bool) Grille*
+        +ecriture(const Grille&, int, bool) void
+    }
+
+    class RegleCellule{
+        <<abstract>>
+        +calculerEtatSuivant(bool, int) bool
+    }
+
+    class RegleCelluleStandard{
+        +calculerEtatSuivant(bool, int) bool
+    }
+    JeuDeLaVie *-- Grille : contient
+    Grille *-- Cellule : contient
+    RegleCelluleStandard --|> RegleCellule : hérite
+    Cellule ..> RegleCellule : utilise
+    Cellule *-- EtatCellule : a un état
+    EtatVivant --|> EtatCellule : hérite
+    EtatMort --|> EtatCellule : hérite
+    FenetreGraphique --|> Interface : hérite
+    Console --|> Interface : hérite
+    JeuDeLaVie ..> Interface : utilise
+    JeuDeLaVie ..> Fichier : utilise
