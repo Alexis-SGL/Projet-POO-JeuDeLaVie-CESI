@@ -54,7 +54,7 @@ int main(int argc, char* argv[]) {
         std::cout << "!! Entree invalide. Entrez un entier positif : ";
     }
 
-    //Choix du mode torique (ponit technique supplémentaire)
+    //Choix du mode torique (point technique supplémentaire)
     char choixTorique;
     bool estTorique=false;
     std::cout << "\nVoulez-vous activer le mode torique ? (o/n) : ";  std::cin >> choixTorique;
@@ -107,3 +107,4 @@ int main(int argc, char* argv[]) {
 
     return 0;
 }
+
